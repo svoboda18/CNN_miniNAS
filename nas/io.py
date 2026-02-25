@@ -3,6 +3,7 @@ import yaml
 import os
 import matplotlib.pyplot as plt
 import torch
+from tqdm import tqdm
 
 def load_config(path: str) -> dict:
     """
@@ -40,7 +41,7 @@ def load_config(path: str) -> dict:
     if not isinstance(n, int) or n <= 0:
         raise ValueError("nbr_iterations must be a positive integer")
 
-    print("Config loaded and validated successfully.")
+    print(f"Config loaded and validated successfully.")
     return config
 
 
@@ -56,7 +57,8 @@ def save_results(path: str, all_results: list):
 
     accuracies = []
 
-    for i, result in enumerate(all_results):
+    for i, result in enumerate(tqdm(all_results, desc="  saving models", unit="model",
+                                    bar_format="  {desc} {bar:25}| {n_fmt}/{total_fmt} [{elapsed}]")):
         # create folder for this model
         model_dir = os.path.join(path, f"model_{i}")
         os.makedirs(model_dir, exist_ok=True)
@@ -85,7 +87,7 @@ def save_results(path: str, all_results: list):
     # save accuracies.txt
     with open(os.path.join(path, "accuracies.txt"), "w") as f:
         f.write("\n".join(accuracies))
-    print("Saved accuracies.txt")
+    tqdm.write("  accuracies.txt saved")
 
     # find best model and save its code
     best = max(all_results, key=lambda r: r["acc_val"])
@@ -93,9 +95,7 @@ def save_results(path: str, all_results: list):
     code = generate_code(best["architecture"])
     with open(os.path.join(path, "best_model_code.py"), "w") as f:
         f.write(code)
-    print(f"Best model was Model {best_index} "
-          f"with acc = {best['acc_val']:.4f}")
-    print("Saved best_model_code.py")
+    tqdm.write(f"  best_model_code.py saved  (model_{best_index}  acc={best['acc_val']:.4f})")
 
 
 def generate_code(architecture: dict) -> str:

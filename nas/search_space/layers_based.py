@@ -1,4 +1,5 @@
 import itertools
+from tqdm import tqdm
 from .base import SearchSpace
 
 DEFAULT_INPUT_CHANNELS = 1
@@ -19,7 +20,15 @@ class LayersBased(SearchSpace):
         all_architectures = []
 
         # STAGE 1 — iterate over every allowed layer count
-        for n_layers in ss['layers_count']:
+        count_bar = tqdm(
+            ss['layers_count'],
+            desc="  enumerating",
+            unit="n_layers",
+            bar_format="  {desc} {bar:20}| {n_fmt}/{total_fmt} layer-counts  [found={postfix[0]}]",
+            postfix=[0],
+            leave=False,
+        )
+        for n_layers in count_bar:
 
             # Every possible sequence of layer types of length n_layers
             for type_sequence in itertools.product(ss['layers_types'], repeat=n_layers):
@@ -43,7 +52,9 @@ class LayersBased(SearchSpace):
                         if self._is_spatially_valid(arch):
                             all_architectures.append(arch)
 
-        print(f"[LayersBased] Total valid architectures found: {len(all_architectures)}")
+            count_bar.postfix[0] = len(all_architectures)
+
+        tqdm.write(f"  search space: {len(all_architectures)} valid architectures")
         return all_architectures
 
     # ── STAGE 1 helper ────────────────────────────────────────────────────

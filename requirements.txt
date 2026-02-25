@@ -14,6 +14,9 @@ pyyaml>=6.0           # parses configs/*.yaml
 
 # ── Visualisation (loss graphs saved as .png) ─────────────────────────────────
 matplotlib>=3.6.0     # loss_history.png output in nas/io.py::save_results
-
+# ── Progress & terminal UI ───────────────────────────────────────────────────
+rich>=13.0.0          # panels, progress bars, spinners, tables
+tqdm>=4.65.0          # inner-loop progress bars# ── Progress display ─────────────────────────────────────────────────────────────
+tqdm>=4.64.0          # progress bars for training loops and search steps
 # ── Development / testing (optional) ─────────────────────────────────────────
 pytest>=7.0.0         # run: pytest tests/
