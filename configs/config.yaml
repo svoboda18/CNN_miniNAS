@@ -1,15 +1,12 @@
 SearchSpace:
   type: LayersBased
   layers_types: [Conv2d, MaxPool2d, Dropout, ReLU]
-  layers_count: [5, 7]
+  layers_count: [4, 5]
   channels: [3, 5]
   kernel: [2, 3]
-  # padding: symmetric pixel count added to each side of the input.
-  padding: [0, 1, 2]
-  # padding_mode: fill algorithm for padded pixels.
-  # Options: 'zeros' (default), 'reflect', 'replicate', 'circular'.
+  padding: [0, 1]
   padding_mode: [zeros]
-  last_hid_mlp: [0, 50, 100]
+  last_hid_mlp: [0, 50]
   dropout_rates: [0.1, 0.3]
 
 SearchStrategy:
@@ -22,15 +19,12 @@ ValidationStrategy:
   optimizer_params: {lr: 0.1}
   epochs: 15
   metrics: [acc_val]
-  # use_full_dataset: set to true to train on the complete CSV files.
-  # When false, only max_samples rows are used per split, which significantly
-  # reduces execution time at the cost of evaluation fidelity.
   use_full_dataset: true
   trn_data:
     url: data/mnist_train.csv
     batch: 30
-    max_samples: 5000    # ignored when use_full_dataset is true
+    max_samples: 5000
   val_data:
     url: data/mnist_test.csv
     batch: 40
-    max_samples: 1000    # ignored when use_full_dataset is true
+    max_samples: 1000

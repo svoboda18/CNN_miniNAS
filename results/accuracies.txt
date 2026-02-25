@@ -1,0 +1,4 @@
+Model 0: acc_val = 0.1010
+Model 1: acc_val = 0.8494
+Model 2: acc_val = 0.0974
+Model 3: acc_val = 0.1135
