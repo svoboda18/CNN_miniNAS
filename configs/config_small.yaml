@@ -1,0 +1,30 @@
+SearchSpace:
+  type: LayersBased
+  layers_types: [Conv2d, MaxPool2d, Dropout, ReLU]
+  layers_count: [3, 5]
+  channels: [3, 5]
+  kernel: [2, 3]
+  padding: [0, 1]
+  padding_mode: [zeros]
+  last_hid_mlp: [0, 50]
+  dropout_rates: [0.1, 0.3]
+
+SearchStrategy:
+  type: RandomSearch
+  nbr_iterations: 4
+
+ValidationStrategy:
+  type: FullTraining
+  optimizer: Adam
+  optimizer_params: {lr: 0.1}
+  epochs: 15
+  metrics: [acc_val]
+  use_full_dataset: false
+  trn_data:
+    url: data/mnist_train.csv
+    batch: 30
+    max_samples: 5000
+  val_data:
+    url: data/mnist_test.csv
+    batch: 40
+    max_samples: 1000
