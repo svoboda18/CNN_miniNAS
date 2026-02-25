@@ -1,0 +1,19 @@
+# CNN_miniNAS – Python dependencies
+# Install with:  pip install -r requirements.txt
+
+# ── Core deep-learning framework ─────────────────────────────────────────────
+torch>=2.0.0          # PyTorch – model building, training, GPU support
+torchvision>=0.15.0   # optional but useful for future dataset utilities
+
+# ── Data handling ─────────────────────────────────────────────────────────────
+pandas>=1.5.0         # loads MNIST CSV files (mnist_train.csv / mnist_test.csv)
+numpy>=1.23.0         # array operations (pulled in by pandas/torch anyway)
+
+# ── Config & I/O ─────────────────────────────────────────────────────────────
+pyyaml>=6.0           # parses configs/*.yaml
+
+# ── Visualisation (loss graphs saved as .png) ─────────────────────────────────
+matplotlib>=3.6.0     # loss_history.png output in nas/io.py::save_results
+
+# ── Development / testing (optional) ─────────────────────────────────────────
+pytest>=7.0.0         # run: pytest tests/
