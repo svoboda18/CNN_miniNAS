@@ -1,5 +1,5 @@
-echo data/ > .gitignore
-echo __pycache__/ >> .gitignore
-echo *.pyc >> .gitignore
-echo results/ >> .gitignore
-echo *.csv >> .gitignore
+data/
+__pycache__/
+*.pyc
+results/
+.DS_Store
