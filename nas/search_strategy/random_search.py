@@ -16,7 +16,9 @@ class RandomSearch(SearchStrategy):
             config: SearchStrategy section from YAML
         """
         self.search_space = search_space
-        self.nbr_iterations = config["nbr_iterations"]
+        # Config is the full YAML dict; strategy params live under SearchStrategy
+        strat_cfg = config.get("SearchStrategy", config)
+        self.nbr_iterations = strat_cfg["nbr_iterations"]
 
         if not self.search_space:
             raise ValueError("[RandomSearch] Search space is empty.")

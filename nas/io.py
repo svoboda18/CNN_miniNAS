@@ -70,9 +70,14 @@ def save_results(path: str, all_results: list):
         plt.savefig(os.path.join(model_dir, "loss_history.png"))
         plt.close()
 
-        # save model weights
-        torch.save(result["model"].state_dict(),
-                   os.path.join(model_dir, "model.pt"))
+        # save model weights (only when a real model was returned)
+        if result["model"] is not None:
+            torch.save(result["model"].state_dict(),
+                       os.path.join(model_dir, "model.pt"))
+        else:
+            # Leave a placeholder so the folder is not silently empty
+            with open(os.path.join(model_dir, "model_not_saved.txt"), "w") as nf:
+                nf.write("Model object was None — training may not have run.\n")
 
         # collect accuracy line
         accuracies.append(f"Model {i}: acc_val = {result['acc_val']:.4f}")
@@ -112,12 +117,13 @@ def generate_code(architecture: dict) -> str:
     for layer in architecture["layers"]:
         t = layer["type"]
         if t == "Conv2d":
-            out_ch = layer["out_channels"]
-            k = layer["kernel_size"]
+            out_ch = layer["channels"]          # canonical key
+            k = layer["kernel"]                 # canonical key
             p = layer.get("padding", 0)
+            pm = layer.get("padding_mode", "zeros")
             lines.append(
                 f"            nn.Conv2d({in_ch}, {out_ch}, "
-                f"kernel_size={k}, padding={p}),"
+                f"kernel_size={k}, padding={p}, padding_mode='{pm}'),"
             )
             in_ch = out_ch
         elif t == "ReLU":

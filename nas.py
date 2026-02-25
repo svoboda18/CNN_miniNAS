@@ -2,7 +2,7 @@
 nas.py — CNN_Cls_miniNAS Entry Point
 
 Usage:
-    python nas.py ./configs/config1.yaml
+    python nas.py ./configs/config.yaml [output_path]
 """
 
 import sys
@@ -10,28 +10,12 @@ import sys
 from nas.io              import load_config, save_results
 from nas.search_space    import get_search_space
 from nas.search_strategy.random_search import RandomSearch
-# from nas.validation    import get_validator    # uncomment when ready
-
-
-def _stub_validator(architecture: dict) -> dict:
-    """
-    Temporary placeholder — DELETE when validation module is ready.
-    Replace with:  validator = get_validator(config).validate
-    """
-    import random
-    print("  [STUB] Returning fake metrics (validation not yet implemented).")
-    return {
-        "acc_val"     : round(random.uniform(0.70, 0.99), 4),
-        "loss_history": [round(1.5 - i * 0.08 + random.uniform(-0.05, 0.05), 4)
-                         for i in range(15)],
-        "model"       : None,
-        "architecture": architecture,
-    }
+from nas.validation      import get_validator
 
 
 def architecture_search(config: dict, output_path: str = "./results"):
 
-    # STEP 1 — build the full search space (your module)
+    # STEP 1 — build the full search space
     space_obj     = get_search_space(config)
     architectures = space_obj.define_space(config)   # list[dict]
     print(f"[NAS] Search space ready — {len(architectures)} valid architectures.")
@@ -43,7 +27,7 @@ def architecture_search(config: dict, output_path: str = "./results"):
     indices = strategy.search()
 
     # STEP 4 — validate each sampled architecture
-    validator = _stub_validator    # swap for real validator when ready
+    validator = get_validator(config)
 
     all_results = []
 
@@ -56,7 +40,7 @@ def architecture_search(config: dict, output_path: str = "./results"):
         for layer in arch["layers"]:
             print(f"    {layer}")
 
-        result = validator(arch)
+        result = validator.validate(arch)
         result["architecture"] = arch
         print(f"  acc_val = {result['acc_val']:.4f}")
 
@@ -70,7 +54,7 @@ def architecture_search(config: dict, output_path: str = "./results"):
 
 
 if __name__ == "__main__":
-    config_path = sys.argv[1] if len(sys.argv) > 1 else "./configs/config1.yaml"
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "./configs/config.yaml"
     output_path = sys.argv[2] if len(sys.argv) > 2 else "./results"
 
     print("=" * 50)

@@ -2,41 +2,52 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
+from typing import Optional
 import pandas as pd
 import os
 import time
-from model_builder import ModelBuilder
+from nas.model_builder import ModelBuilder
 
 class FullTraining:
     def __init__(self, config: dict):
-        # Access config via ValidationStrategy section as per YAML
         vs_cfg = config['ValidationStrategy']
         self.epochs = vs_cfg.get('epochs', 15)
         self.lr = vs_cfg.get('optimizer_params', {}).get('lr', 0.1)
-        
+        self.use_full_dataset = vs_cfg.get('use_full_dataset', True)
+
         # Data paths and batch sizes from YAML
         self.train_url = vs_cfg['trn_data']['url']
         self.train_batch = vs_cfg['trn_data']['batch']
+        self.train_max = vs_cfg['trn_data'].get('max_samples', None)
+
         self.test_url = vs_cfg['val_data']['url']
         self.test_batch = vs_cfg['val_data']['batch']
-        
+        self.test_max = vs_cfg['val_data'].get('max_samples', None)
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def _load_data(self, url, batch_size):
-        # Resolve path relative to project root
+    def _load_data(self, url: str, batch_size: int, max_samples: Optional[int]):
         if not os.path.exists(url):
             raise FileNotFoundError(f"MNIST CSV not found at: {url}")
-            
+
         df = pd.read_csv(url)
+        total_rows = len(df)
+
+        # Optionally limit to a subset of rows for faster experimentation.
+        if not self.use_full_dataset and max_samples is not None:
+            df = df.iloc[:max_samples]
+            print(f"  [FullTraining] Using {len(df)}/{total_rows} samples "
+                  f"(use_full_dataset=false, max_samples={max_samples})")
+
         labels = torch.tensor(df.iloc[:, 0].values, dtype=torch.long)
         pixels = torch.tensor(df.iloc[:, 1:].values, dtype=torch.float32) / 255.0
         pixels = pixels.view(-1, 1, 28, 28)
-        
+
         return DataLoader(TensorDataset(pixels, labels), batch_size=batch_size, shuffle=True)
 
     def validate(self, architecture: dict) -> dict:
-        train_loader = self._load_data(self.train_url, self.train_batch)
-        test_loader = self._load_data(self.test_url, self.test_batch)
+        train_loader = self._load_data(self.train_url, self.train_batch, self.train_max)
+        test_loader  = self._load_data(self.test_url,  self.test_batch,  self.test_max)
         
         model = ModelBuilder.build_from_dict(architecture).to(self.device)
         optimizer = optim.Adam(model.parameters(), lr=self.lr)

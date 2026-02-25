@@ -17,11 +17,11 @@ class ModelBuilder:
             if lt == 'Conv2d':
                 k = layer['kernel']
                 p = layer.get('padding', 0)
-                # Formula: [(W − K + 2P) / S] + 1 (Stride defaults to 1 here)
+                # Formula: floor[(W − K + 2P) / S] + 1  (stride = 1)
                 spatial = (spatial - k + 2 * p) + 1
                 current_channels = layer['channels']
             elif lt == 'MaxPool2d':
-                k = layer['kernel']
+                k = layer['kernel']           # canonical key
                 s = layer.get('stride', k)
                 spatial = (spatial - k) // s + 1
         
@@ -40,15 +40,24 @@ class ModelBuilder:
         for l_cfg in architecture['layers']:
             lt = l_cfg['type']
             if lt == 'Conv2d':
-                feature_modules.append(nn.Conv2d(in_ch, l_cfg['channels'], 
-                                               kernel_size=l_cfg['kernel'], 
-                                               padding=l_cfg.get('padding', 0)))
+                # padding      – integer pixels added symmetrically on each side.
+                # padding_mode – fill algorithm: 'zeros' (default), 'reflect',
+                #                  'replicate', or 'circular'.
+                feature_modules.append(nn.Conv2d(
+                    in_ch,
+                    l_cfg['channels'],
+                    kernel_size=l_cfg['kernel'],
+                    padding=l_cfg.get('padding', 0),
+                    padding_mode=l_cfg.get('padding_mode', 'zeros'),
+                ))
                 in_ch = l_cfg['channels']
             elif lt == 'ReLU':
                 feature_modules.append(nn.ReLU())
             elif lt == 'MaxPool2d':
-                feature_modules.append(nn.MaxPool2d(kernel_size=l_cfg['kernel'], 
-                                                  stride=l_cfg.get('stride', 2)))
+                feature_modules.append(nn.MaxPool2d(
+                    kernel_size=l_cfg['kernel'],
+                    stride=l_cfg.get('stride', 2),
+                ))
             elif lt == 'Dropout':
                 feature_modules.append(nn.Dropout(p=l_cfg.get('rate', 0.1)))
 

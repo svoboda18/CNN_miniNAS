@@ -70,25 +70,42 @@ class LayersBased(SearchSpace):
         Generator. For each position in the sequence, builds the list of
         all possible layer dicts. Then yields the Cartesian product.
 
-        Conv2d    → all (out_channels x kernel_size x padding) combinations
-        MaxPool2d → fixed kernel_size=2, stride=2  (1 option)
-        ReLU      → no params                       (1 option)
-        Dropout   → all (p,) combinations
+        Conv2d    → all (channels × kernel × padding × padding_mode) combos
+        MaxPool2d → fixed kernel=2, stride=2                (1 option)
+        ReLU      → no params                               (1 option)
+        Dropout   → all (rate,) combinations
         """
         per_position_choices = []
 
         for lt in type_sequence:
             if lt == 'Conv2d':
                 choices = [
-                    {'type': 'Conv2d', 'out_channels': oc, 'kernel_size': k, 'padding': p}
-                    for oc, k, p in itertools.product(ss['channels'], ss['kernel'], ss['padding'])
+                    # Canonical Conv2d keys used throughout the project:
+                    #   'channels'     – output channel count
+                    #   'kernel'       – square kernel size
+                    #   'padding'      – symmetric pixel count per side
+                    #   'padding_mode' – fill algorithm ('zeros', 'reflect',
+                    #                    'replicate', 'circular')
+                    {
+                        'type': 'Conv2d',
+                        'channels': oc,
+                        'kernel': k,
+                        'padding': p,
+                        'padding_mode': pm,
+                    }
+                    for oc, k, p, pm in itertools.product(
+                        ss['channels'],
+                        ss['kernel'],
+                        ss['padding'],
+                        ss.get('padding_mode', ['zeros']),
+                    )
                 ]
             elif lt == 'MaxPool2d':
-                choices = [{'type': 'MaxPool2d', 'kernel_size': 2, 'stride': 2}]
+                choices = [{'type': 'MaxPool2d', 'kernel': 2, 'stride': 2}]
             elif lt == 'ReLU':
                 choices = [{'type': 'ReLU'}]
             elif lt == 'Dropout':
-                choices = [{'type': 'Dropout', 'p': rate} for rate in ss['dropout_rates']]
+                choices = [{'type': 'Dropout', 'rate': rate} for rate in ss['dropout_rates']]
             else:
                 choices = [{'type': lt}]
 
@@ -115,11 +132,11 @@ class LayersBased(SearchSpace):
         for layer in architecture['layers']:
             lt = layer['type']
             if lt == 'Conv2d':
-                spatial = spatial + 2 * layer['padding'] - layer['kernel_size'] + 1
+                spatial = spatial + 2 * layer['padding'] - layer['kernel'] + 1
                 if spatial <= 0:
                     return False
             elif lt == 'MaxPool2d':
-                spatial = (spatial - layer['kernel_size']) // layer['stride'] + 1
+                spatial = (spatial - layer['kernel']) // layer['stride'] + 1
                 if spatial <= 0:
                     return False
         return True
