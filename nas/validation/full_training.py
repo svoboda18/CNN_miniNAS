@@ -10,11 +10,25 @@ import time
 from nas.model_builder import ModelBuilder
 
 class FullTraining:
+
+    # Metrics that can be requested via the YAML 'metrics' list
+    SUPPORTED_METRICS = {"acc_val", "runtime"}
+
     def __init__(self, config: dict):
         vs_cfg = config['ValidationStrategy']
         self.epochs = vs_cfg.get('epochs', 15)
         self.lr = vs_cfg.get('optimizer_params', {}).get('lr', 0.1)
         self.use_full_dataset = vs_cfg.get('use_full_dataset', True)
+
+        # Requested metrics (default: acc_val only)
+        raw_metrics = vs_cfg.get('metrics', ['acc_val'])
+        unknown = set(raw_metrics) - self.SUPPORTED_METRICS
+        if unknown:
+            raise ValueError(
+                f"[FullTraining] Unknown metric(s): {unknown}. "
+                f"Supported: {self.SUPPORTED_METRICS}"
+            )
+        self.metrics: list = list(raw_metrics)
 
         # Data paths and batch sizes from YAML
         self.train_url = vs_cfg['trn_data']['url']
@@ -108,9 +122,20 @@ class FullTraining:
                 correct += (out.argmax(1) == y).sum().item()
                 total += y.size(0)
 
-        return {
+        # Build full result, then expose only requested metrics
+        # ('loss_history' and 'model' are always included because
+        #  io.save_results needs them regardless of metrics config)
+        all_computed = {
             "acc_val": correct / total,
-            "loss_history": loss_history,
-            "model": model,
-            "runtime": time.time() - start_time
+            "runtime": time.time() - start_time,
         }
+        result = {k: v for k, v in all_computed.items() if k in self.metrics}
+        result["loss_history"] = loss_history
+        result["model"] = model
+
+        if "acc_val" not in result:
+            raise ValueError(
+                "[FullTraining] 'acc_val' must be listed in metrics — "
+                "it is required to rank architectures."
+            )
+        return result
