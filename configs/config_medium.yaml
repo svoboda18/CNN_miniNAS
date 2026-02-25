@@ -11,7 +11,7 @@ SearchSpace:
 
 SearchStrategy:
   type: RandomSearch
-  nbr_iterations: 8
+  nbr_iterations: 4
 
 ValidationStrategy:
   type: FullTraining
@@ -19,7 +19,7 @@ ValidationStrategy:
   optimizer_params: {lr: 0.1}
   epochs: 15
   metrics: [acc_val]
-  use_full_dataset: false
+  use_full_dataset: true
   trn_data:
     url: data/mnist_train.csv
     batch: 30
