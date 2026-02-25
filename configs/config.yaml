@@ -25,7 +25,7 @@ ValidationStrategy:
   # use_full_dataset: set to true to train on the complete CSV files.
   # When false, only max_samples rows are used per split, which significantly
   # reduces execution time at the cost of evaluation fidelity.
-  use_full_dataset: false
+  use_full_dataset: true
   trn_data:
     url: data/mnist_train.csv
     batch: 30
